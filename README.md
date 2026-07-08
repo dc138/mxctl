@@ -48,7 +48,7 @@ running without a config file:
 ## Usage
 
 ```
-mxctl [--color {auto,always,never}] [-v] <group> <command> [args]
+mxctl [--color {auto,always,never}] [--plain] [-v] <group> <command> [args]
 ```
 
 ### Addresses (mailboxes)
@@ -139,6 +139,11 @@ mxctl wildcard get example.com           # all@example.com
         box@example.com
   long.name@example.com
   ```
+
+- With `--plain`, listings are machine readable: colors are disabled
+  (implies `--color=never`), no alignment padding is added, and forwarding
+  rules are printed as `source: dest1, dest2, ...` instead of using the
+  arrow. Prefer `--plain` when piping listings to other tools.
 - Errors are printed to stderr as `mxctl: error: <message>` and the process
   exits with a non-zero status.
 

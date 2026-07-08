@@ -104,6 +104,19 @@ def test_forward_roundtrip(api_env: HTTPServer) -> None:
     assert listed.stdout == "info@domain.com -> me@other.com\n"
 
 
+def test_forward_list_plain(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(ok(["domain.com"]))
+    api_env.expect_request(
+        "/domains/domain.com/forwarders", method="GET"
+    ).respond_with_json(
+        ok([forwarder("sales@domain.com", "team@other.net", "boss@other.com")])
+    )
+    result = run_mxctl("--plain", "forward", "list")
+    assert result.returncode == 0
+    assert result.stdout == "sales@domain.com: boss@other.com, team@other.net\n"
+    assert result.stderr == ""
+
+
 def test_wildcard_get_and_set(api_env: HTTPServer) -> None:
     api_env.expect_request(
         "/domains/domain.com/catch-all", method="GET"

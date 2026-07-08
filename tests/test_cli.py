@@ -105,6 +105,24 @@ def test_address_list_alignment_ignores_color_codes(api_env: HTTPServer) -> None
     )
 
 
+def test_address_list_plain_skips_padding(api_env: HTTPServer) -> None:
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("long.name@domain.com"), account("box@domain.com")]))
+    result = runner.invoke(app, ["--plain", "address", "list", "domain.com"])
+    assert result.exit_code == 0
+    assert result.stdout == "box@domain.com\nlong.name@domain.com\n"
+
+
+def test_plain_overrides_color_always(api_env: HTTPServer) -> None:
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@domain.com")]))
+    result = runner.invoke(app, ["--plain", "--color=always", "address", "list", "domain.com"])
+    assert result.exit_code == 0
+    assert result.stdout == "box@domain.com\n"
+
+
 def test_address_list_color_always(api_env: HTTPServer) -> None:
     api_env.expect_request(
         "/domains/domain.com/email-accounts", method="GET"
@@ -265,6 +283,17 @@ def test_forward_list_local_and_domain_suffix(api_env: HTTPServer) -> None:
     assert result.stdout == "sales@domain.com -> boss@other.com, team@other.net\n"
 
 
+def test_forward_list_plain(api_env: HTTPServer) -> None:
+    setup_forward_fixtures(api_env)
+    result = runner.invoke(app, ["--plain", "forward", "list"])
+    assert result.exit_code == 0
+    assert result.stdout == (
+        "info@domain.com: me@other.com\n"
+        "sales@domain.com: boss@other.com, team@other.net\n"
+        "info@example.com: me@other.com\n"
+    )
+
+
 def test_forward_list_bare_suffix(api_env: HTTPServer) -> None:
     setup_forward_fixtures(api_env)
     result = runner.invoke(app, ["forward", "list", ".com"])
@@ -353,6 +382,21 @@ def test_wildcard_get_all_sorted(api_env: HTTPServer) -> None:
     assert result.stdout == (
         "domain.com  fail\nexample.com blackhole\ndomain.net  all@domain.net\n"
     )
+
+
+def test_wildcard_get_all_plain(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(
+        ok(["example.com", "domain.com"])
+    )
+    api_env.expect_request(
+        "/domains/domain.com/catch-all", method="GET"
+    ).respond_with_json(ok({"type": "fail"}))
+    api_env.expect_request(
+        "/domains/example.com/catch-all", method="GET"
+    ).respond_with_json(ok({"type": "address", "address": "all@example.com"}))
+    result = runner.invoke(app, ["--plain", "wildcard", "get"])
+    assert result.exit_code == 0
+    assert result.stdout == "domain.com fail\nexample.com all@example.com\n"
 
 
 def test_wildcard_get_all_aligns_address_policies(api_env: HTTPServer) -> None:

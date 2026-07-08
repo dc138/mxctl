@@ -42,8 +42,11 @@ class ColorMode(enum.StrEnum):
 class State:
     color_mode: ColorMode
     verbose: bool
+    plain: bool
 
     def color_for(self, stream: TextIO) -> bool:
+        if self.plain:
+            return False
         if self.color_mode is ColorMode.ALWAYS:
             return True
         if self.color_mode is ColorMode.NEVER:
@@ -92,6 +95,13 @@ def root(
         bool,
         typer.Option("--verbose", "-v", help="Print a note on stderr for successful operations."),
     ] = False,
+    plain: Annotated[
+        bool,
+        typer.Option(
+            "--plain",
+            help="Machine readable listing output: no alignment padding, implies --color=never.",
+        ),
+    ] = False,
     version: Annotated[
         bool,
         typer.Option(
@@ -102,7 +112,7 @@ def root(
         ),
     ] = False,
 ) -> None:
-    ctx.obj = State(color_mode=color, verbose=verbose)
+    ctx.obj = State(color_mode=color, verbose=verbose, plain=plain)
 
 
 def get_state(ctx: typer.Context) -> State:
@@ -235,7 +245,9 @@ def address_list(
                 accounts.extend(client.list_accounts(name))
     accounts.sort(key=lambda account: hierarchical_key(account.email))
     enabled = state.color_for(sys.stdout)
-    local_width, domain_width = address_widths([account.email for account in accounts])
+    local_width, domain_width = (
+        (0, 0) if state.plain else address_widths([account.email for account in accounts])
+    )
     for account in accounts:
         line = format_address(
             enabled, account.email, local_width, domain_width if state.verbose else 0
@@ -320,8 +332,11 @@ def forward_list(
     local_width, domain_width = address_widths([rule.email for rule in matching])
     for rule in matching:
         destinations = ", ".join(sorted(rule.destinations, key=hierarchical_key))
-        source = format_address(enabled, rule.email, local_width, domain_width)
-        print(f"{source} {arrow} {destinations}")
+        if state.plain:
+            print(f"{rule.email}: {destinations}")
+        else:
+            source = format_address(enabled, rule.email, local_width, domain_width)
+            print(f"{source} {arrow} {destinations}")
 
 
 @forward_app.command("create")
@@ -382,15 +397,17 @@ def wildcard_get(
         else:
             names = sorted(client.list_domains(), key=hierarchical_key)
             catchalls = [(name, client.get_catchall(name)) for name in names]
-            domain_width = max((len(name) for name in names), default=0)
-            local_width = max(
-                (
-                    len(catchall.address.rpartition("@")[0])
-                    for _, catchall in catchalls
-                    if catchall.address is not None
-                ),
-                default=0,
-            )
+            domain_width = local_width = 0
+            if not state.plain:
+                domain_width = max((len(name) for name in names), default=0)
+                local_width = max(
+                    (
+                        len(catchall.address.rpartition("@")[0])
+                        for _, catchall in catchalls
+                        if catchall.address is not None
+                    ),
+                    default=0,
+                )
             for name, catchall in catchalls:
                 padded = paint(enabled, CYAN, name) + " " * (domain_width - len(name))
                 print(f"{padded} {render_policy(enabled, catchall, local_width)}")
