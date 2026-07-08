@@ -4,9 +4,16 @@ import pytest
 from pytest_httpserver import HTTPServer
 from typer.testing import CliRunner
 
+from mxctl import __version__
 from mxctl.cli import app
 
 runner = CliRunner()
+
+
+def test_version_shorthand() -> None:
+    result = runner.invoke(app, ["-V"])
+    assert result.exit_code == 0
+    assert result.stdout == f"{__version__}\n"
 
 
 def account(email: str, **overrides: Any) -> dict[str, Any]:
@@ -123,6 +130,15 @@ def test_plain_overrides_color_always(api_env: HTTPServer) -> None:
     assert result.stdout == "box@domain.com\n"
 
 
+def test_plain_and_color_shorthands(api_env: HTTPServer) -> None:
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@domain.com")]))
+    result = runner.invoke(app, ["-p", "-c", "always", "address", "list", "domain.com"])
+    assert result.exit_code == 0
+    assert result.stdout == "box@domain.com\n"
+
+
 def test_address_list_color_always(api_env: HTTPServer) -> None:
     api_env.expect_request(
         "/domains/domain.com/email-accounts", method="GET"
@@ -163,17 +179,7 @@ def test_address_create_flags_forwarded(api_env: HTTPServer) -> None:
     ).respond_with_json(ok({}), status=201)
     result = runner.invoke(
         app,
-        [
-            "-v",
-            "address",
-            "create",
-            "box@domain.com",
-            "--password-stdin",
-            "--quota",
-            "0",
-            "--limit",
-            "100",
-        ],
+        ["-v", "address", "create", "box@domain.com", "-P", "-q", "0", "-l", "100"],
         input="Secret123\n",
     )
     assert result.exit_code == 0

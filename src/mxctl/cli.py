@@ -88,6 +88,7 @@ def root(
         ColorMode,
         typer.Option(
             "--color",
+            "-c",
             help="Color output: auto (only on a terminal, honors NO_COLOR), always, or never.",
         ),
     ] = ColorMode.AUTO,
@@ -99,6 +100,7 @@ def root(
         bool,
         typer.Option(
             "--plain",
+            "-p",
             help="Machine readable listing output: no alignment padding, implies --color=never.",
         ),
     ] = False,
@@ -106,6 +108,7 @@ def root(
         bool,
         typer.Option(
             "--version",
+            "-V",
             callback=_version_callback,
             is_eager=True,
             help="Show the version and exit.",
@@ -268,12 +271,16 @@ def address_create(
     ctx: typer.Context,
     email: Annotated[str, typer.Argument(metavar="USER@DOMAIN")],
     quota: Annotated[
-        int | None, typer.Option("--quota", help="Storage quota in MB (0 = unlimited).")
+        int | None, typer.Option("--quota", "-q", help="Storage quota in MB (0 = unlimited).")
     ] = None,
-    limit: Annotated[int | None, typer.Option("--limit", help="Daily send limit.")] = None,
+    limit: Annotated[
+        int | None, typer.Option("--limit", "-l", help="Daily send limit.")
+    ] = None,
     password_stdin: Annotated[
         bool,
-        typer.Option("--password-stdin", help="Read the password from the first line of stdin."),
+        typer.Option(
+            "--password-stdin", "-P", help="Read the password from the first line of stdin."
+        ),
     ] = False,
 ) -> None:
     """Create an email account. Prompts for the password."""

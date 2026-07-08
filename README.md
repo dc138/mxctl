@@ -51,6 +51,10 @@ running without a config file:
 mxctl [--color {auto,always,never}] [--plain] [-v] <group> <command> [args]
 ```
 
+Every option has a single-letter shorthand: `-c` (`--color`), `-p`
+(`--plain`), `-v` (`--verbose`), `-V` (`--version`), `-q` (`--quota`),
+`-l` (`--limit`), `-P` (`--password-stdin`), and `-y` (`--yes`).
+
 ### Addresses (mailboxes)
 
 ```sh
@@ -140,7 +144,7 @@ mxctl wildcard get example.com           # all@example.com
   long.name@example.com
   ```
 
-- With `--plain`, listings are machine readable: colors are disabled
+- With `--plain` (`-p`), listings are machine readable: colors are disabled
   (implies `--color=never`), no alignment padding is added, and forwarding
   rules are printed as `source: dest1, dest2, ...` instead of using the
   arrow. Prefer `--plain` when piping listings to other tools.
@@ -164,7 +168,7 @@ a.a@domain.net
 
 ### Colors
 
-`--color` controls ANSI colors: `auto` (default) enables them only when the
+`--color` (`-c`) controls ANSI colors: `auto` (default) enables them only when the
 output stream is a terminal and the `NO_COLOR` environment variable is not
 set; `always` and `never` force them on or off.
 
