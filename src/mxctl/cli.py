@@ -203,12 +203,23 @@ def api_client(state: State) -> Iterator[MxrouteClient]:
 @address_app.command("list")
 def address_list(
     ctx: typer.Context,
-    domain: Annotated[str, typer.Argument(help="Domain whose addresses to list.")],
+    domain: Annotated[
+        str,
+        typer.Argument(
+            metavar="[DOMAIN]",
+            help="Domain whose addresses to list; all domains when omitted.",
+        ),
+    ] = "",
 ) -> None:
-    """List email accounts under a domain."""
+    """List email accounts under a domain, or under all domains."""
     state = get_state(ctx)
     with api_client(state) as client:
-        accounts = client.list_accounts(domain)
+        if domain:
+            accounts = client.list_accounts(domain)
+        else:
+            accounts = []
+            for name in client.list_domains():
+                accounts.extend(client.list_accounts(name))
     accounts.sort(key=lambda account: hierarchical_key(account.email))
     enabled = state.color_for(sys.stdout)
     for account in accounts:

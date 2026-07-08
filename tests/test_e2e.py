@@ -40,6 +40,22 @@ def test_address_list(api_env: HTTPServer) -> None:
     assert result.stderr == ""
 
 
+def test_address_list_all_domains(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(
+        ok(["example.com", "domain.com"])
+    )
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@domain.com")]))
+    api_env.expect_request(
+        "/domains/example.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@example.com")]))
+    result = run_mxctl("address", "list")
+    assert result.returncode == 0
+    assert result.stdout == "box@domain.com\nbox@example.com\n"
+    assert result.stderr == ""
+
+
 def test_address_create_with_password_stdin(api_env: HTTPServer) -> None:
     api_env.expect_request(
         "/domains/domain.com/email-accounts",

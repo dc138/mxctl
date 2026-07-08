@@ -45,6 +45,22 @@ def test_address_list_sorted(api_env: HTTPServer) -> None:
     assert result.stderr == ""
 
 
+def test_address_list_all_domains_sorted(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(
+        ok(["example.com", "domain.com"])
+    )
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("b.a@domain.com"), account("a.a@domain.com")]))
+    api_env.expect_request(
+        "/domains/example.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@example.com")]))
+    result = runner.invoke(app, ["address", "list"])
+    assert result.exit_code == 0
+    assert result.stdout == "a.a@domain.com\nb.a@domain.com\nbox@example.com\n"
+    assert result.stderr == ""
+
+
 def test_address_list_color_always(api_env: HTTPServer) -> None:
     api_env.expect_request(
         "/domains/domain.com/email-accounts", method="GET"

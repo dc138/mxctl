@@ -54,10 +54,13 @@ mxctl [--color {auto,always,never}] [-v] <group> <command> [args]
 ### Addresses (mailboxes)
 
 ```sh
-mxctl address list <domain>              # list addresses under a domain
+mxctl address list [domain]              # list addresses; all domains when omitted
 mxctl address create <user>@<domain>     # create a mailbox
 mxctl address delete <user>@<domain>     # delete a mailbox (asks first)
 ```
+
+`list` prints the addresses under the given domain, or under every domain of
+the account when the domain is omitted.
 
 `create` prompts twice for the mailbox password with hidden input. For
 scripting, pass `--password-stdin` and pipe the password in:
