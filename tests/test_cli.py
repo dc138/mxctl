@@ -61,6 +61,50 @@ def test_address_list_all_domains_sorted(api_env: HTTPServer) -> None:
     assert result.stderr == ""
 
 
+def test_address_list_aligns_at_signs(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(
+        ok(["example.com", "domain.com"])
+    )
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("long.name@domain.com")]))
+    api_env.expect_request(
+        "/domains/example.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@example.com")]))
+    result = runner.invoke(app, ["address", "list"])
+    assert result.exit_code == 0
+    assert result.stdout == "long.name@domain.com\n      box@example.com\n"
+
+
+def test_address_list_verbose_aligns_extras(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(
+        ok(["example.com", "domain.com"])
+    )
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("long.name@domain.com")]))
+    api_env.expect_request(
+        "/domains/example.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("box@example.com")]))
+    result = runner.invoke(app, ["-v", "address", "list"])
+    assert result.exit_code == 0
+    assert result.stdout == (
+        "long.name@domain.com  quota=1024MB usage=10.5MB sent=3/9600\n"
+        "      box@example.com quota=1024MB usage=10.5MB sent=3/9600\n"
+    )
+
+
+def test_address_list_alignment_ignores_color_codes(api_env: HTTPServer) -> None:
+    api_env.expect_request(
+        "/domains/domain.com/email-accounts", method="GET"
+    ).respond_with_json(ok([account("long.name@domain.com"), account("box@domain.com")]))
+    result = runner.invoke(app, ["--color=always", "address", "list", "domain.com"])
+    assert result.exit_code == 0
+    assert result.stdout == (
+        "      box\x1b[36m@domain.com\x1b[0m\nlong.name\x1b[36m@domain.com\x1b[0m\n"
+    )
+
+
 def test_address_list_color_always(api_env: HTTPServer) -> None:
     api_env.expect_request(
         "/domains/domain.com/email-accounts", method="GET"
@@ -198,9 +242,9 @@ def test_forward_list_all(api_env: HTTPServer) -> None:
     result = runner.invoke(app, ["forward", "list"])
     assert result.exit_code == 0
     assert result.stdout == (
-        "info@domain.com -> me@other.com\n"
-        "sales@domain.com -> boss@other.com, team@other.net\n"
-        "info@example.com -> me@other.com\n"
+        " info@domain.com  -> me@other.com\n"
+        "sales@domain.com  -> boss@other.com, team@other.net\n"
+        " info@example.com -> me@other.com\n"
     )
 
 
@@ -209,7 +253,7 @@ def test_forward_list_domain_suffix(api_env: HTTPServer) -> None:
     result = runner.invoke(app, ["forward", "list", "@domain.com"])
     assert result.exit_code == 0
     assert result.stdout == (
-        "info@domain.com -> me@other.com\n"
+        " info@domain.com -> me@other.com\n"
         "sales@domain.com -> boss@other.com, team@other.net\n"
     )
 
@@ -307,8 +351,21 @@ def test_wildcard_get_all_sorted(api_env: HTTPServer) -> None:
     result = runner.invoke(app, ["wildcard", "get"])
     assert result.exit_code == 0
     assert result.stdout == (
-        "domain.com fail\nexample.com blackhole\ndomain.net all@domain.net\n"
+        "domain.com  fail\nexample.com blackhole\ndomain.net  all@domain.net\n"
     )
+
+
+def test_wildcard_get_all_aligns_address_policies(api_env: HTTPServer) -> None:
+    api_env.expect_request("/domains", method="GET").respond_with_json(ok(["a.com", "b.com"]))
+    api_env.expect_request("/domains/a.com/catch-all", method="GET").respond_with_json(
+        ok({"type": "address", "address": "all@a.com"})
+    )
+    api_env.expect_request("/domains/b.com/catch-all", method="GET").respond_with_json(
+        ok({"type": "address", "address": "forward.this@b.com"})
+    )
+    result = runner.invoke(app, ["wildcard", "get"])
+    assert result.exit_code == 0
+    assert result.stdout == "a.com          all@a.com\nb.com forward.this@b.com\n"
 
 
 def test_wildcard_set_fail(api_env: HTTPServer) -> None:

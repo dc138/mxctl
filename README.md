@@ -132,6 +132,13 @@ mxctl wildcard get example.com           # all@example.com
   is printed to stderr (for example `created address box@example.com`).
 - Listings print one entry per line to stdout and nothing else, so the
   output is easy to pipe.
+- Listings pad email addresses with spaces so that the `@` signs line up
+  vertically, which makes addresses with a common suffix easy to spot:
+
+  ```
+        box@example.com
+  long.name@example.com
+  ```
 - Errors are printed to stderr as `mxctl: error: <message>` and the process
   exits with a non-zero status.
 
