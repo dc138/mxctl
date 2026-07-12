@@ -1,0 +1,6 @@
+# makepkg artifacts
+/mxctl-git/
+/src/
+/pkg/
+/*.pkg.tar*
+/*.log
