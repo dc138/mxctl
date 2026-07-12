@@ -5,6 +5,15 @@ It talks to the MXroute REST API at https://api.mxroute.com.
 
 Because MXroute accounts can hold multiple domains, the domain to operate on is taken from the email address you pass on the command line.
 
+> [!NOTE]
+> This project has been developed with help from generative AI tools.
+> Still, I'm confident enough to be using it for my own needs.
+> If you encounter a bug, please file an issue or PR.
+>
+> **All contributor interactions (PR / issue description, comments, etc.) must be written by a human, not an LLM.
+> AI generated code is allowed, as long as you understand it, take responsibility for it and can explain why its needed by yourself.
+> Please do not file slop / low effort submissions.**
+
 ## Requirements
 
 - Python 3.11 or newer
@@ -146,10 +155,6 @@ a.a@example.com
 a.a@domain.net
 ```
 
-### Colors
-
-`--color` (`-c`) controls ANSI colors: `auto` (default) enables them only when the output stream is a terminal and the `NO_COLOR` environment variable is not set; `always` and `never` force them on or off.
-
 ### Exit codes
 
 | Code | Meaning |
@@ -157,15 +162,6 @@ a.a@domain.net
 | 0    | Success |
 | 1    | Runtime error: API error, invalid response, missing credentials, or a declined confirmation |
 | 2    | Usage error: unknown command, bad flag, or malformed argument |
-
-## Safety
-
-Deleting a mailbox erases all mail stored in it, so mxctl is deliberately strict:
-
-- Every API response is validated against the documented schema (pydantic models) before the tool acts on it or prints anything.
-  Unexpected shapes abort with an error.
-- Deletions are recognized as successful only by the exact expected HTTP status code.
-- `address delete` and `forward delete` always ask for confirmation, and refuse to run non-interactively without an explicit `--yes`.
 
 ## Development
 
@@ -177,3 +173,27 @@ uv run ruff check    # linting
 ```
 
 The test suite never talks to the real MXroute API: unit tests cover the sorting, config, and model validation logic, and integration plus end to end tests run the CLI against a local mock HTTP server (pytest-httpserver).
+
+## License
+
+```
+mxctl, a small command line tool for managing MXroute email hosting.
+Copyright (c) 2026 Antonio de Haro (dc138) <antonio@adaro.eu>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the “Software”), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
