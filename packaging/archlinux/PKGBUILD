@@ -1,0 +1,39 @@
+# Maintainer: dc138 <antonio@adaro.eu>
+pkgname=mxctl-git
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="CLI for managing MXroute email accounts, forwarders, and catch-all policies"
+arch=('any')
+url="https://github.com/dc138/mxctl"
+license=('LicenseRef-custom')
+depends=('python' 'python-typer' 'python-httpx' 'python-pydantic')
+makedepends=('git' 'python-build' 'python-installer' 'python-wheel' 'python-hatchling')
+checkdepends=('python-pytest' 'python-pytest-httpserver')
+provides=('mxctl')
+conflicts=('mxctl')
+source=("$pkgname::git+https://github.com/dc138/mxctl.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+  git describe --long --tags --abbrev=7 | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd "$pkgname"
+  python -m build --wheel --no-isolation
+}
+
+check() {
+  cd "$pkgname"
+  local site_packages
+  site_packages=$(python -c "import site; print(site.getsitepackages()[0])")
+  rm -rf testenv
+  python -m installer --destdir=testenv dist/*.whl
+  PYTHONPATH="$PWD/testenv/$site_packages" python -m pytest
+}
+
+package() {
+  cd "$pkgname"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
