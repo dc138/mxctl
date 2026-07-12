@@ -3,6 +3,8 @@ name = "mxctl"
 version = "0.1.0"
 description = "CLI for managing MXroute email accounts, forwarders, and catch-all policies"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "typer>=0.12",
