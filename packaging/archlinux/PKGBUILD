@@ -1,11 +1,11 @@
 # Maintainer: dc138 <antonio@adaro.eu>
 pkgname=mxctl-git
-pkgver=0.1.0
+pkgver=0.1.0.r1.g23ae411
 pkgrel=1
 pkgdesc="CLI for managing MXroute email accounts, forwarders, and catch-all policies"
 arch=('any')
 url="https://github.com/dc138/mxctl"
-license=('LicenseRef-custom')
+license=('MIT')
 depends=('python' 'python-typer' 'python-httpx' 'python-pydantic')
 makedepends=('git' 'python-build' 'python-installer' 'python-wheel' 'python-hatchling')
 checkdepends=('python-pytest' 'python-pytest-httpserver')
@@ -36,4 +36,5 @@ check() {
 package() {
   cd "$pkgname"
   python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
