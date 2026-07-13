@@ -1,0 +1,196 @@
+.TH MXCTL 1 "2026-07-13" "mxctl 0.1.0" "User Commands"
+.SH NAME
+mxctl \- manage MXroute email accounts, forwarders, and catch-all policies
+.SH SYNOPSIS
+.B mxctl
+.RI [ options ]
+.I group
+.I command
+.RI [ args ]
+.SH DESCRIPTION
+.B mxctl
+is a small command line tool for managing MXroute email hosting:
+mailbox addresses, forwarding rules, and catch-all (wildcard) policies.
+It talks to the MXroute REST API at https://api.mxroute.com.
+.PP
+Because MXroute accounts can hold multiple domains, the domain to operate on
+is taken from the email address given on the command line.
+.SH OPTIONS
+.TP
+.BR \-c ", " \-\-color " {" auto | always | never }
+Control ANSI colors.
+.B auto
+(the default) enables them only when the output stream is a terminal and the
+.B NO_COLOR
+environment variable is not set.
+.TP
+.BR \-p ", " \-\-plain
+Machine readable listing output: colors are disabled, no alignment padding is
+added, and forwarding rules are printed as "source: dest1, dest2" instead of
+using the arrow.
+Prefer this when piping listings to other tools.
+.TP
+.BR \-v ", " \-\-verbose
+Print a short note on stderr for successful operations.
+.TP
+.BR \-V ", " \-\-version
+Show the version and exit.
+.SH COMMANDS
+.SS Addresses (mailboxes)
+.TP
+.B mxctl address list \fR[\fIdomain\fR]
+List addresses under the given domain, or under every domain of the account
+when the domain is omitted.
+.TP
+.B mxctl address create \fIuser\fB@\fIdomain\fR
+Create a mailbox.
+Prompts twice for the password with hidden input.
+Passwords must be at least 8 characters and contain an uppercase letter, a
+lowercase letter, and a digit.
+Accepts these options:
+.RS
+.TP
+.BR \-q ", " \-\-quota " \fIMB\fR"
+Storage quota in MB (0 means unlimited).
+The server default is used when omitted.
+.TP
+.BR \-l ", " \-\-limit " \fIN\fR"
+Daily send limit.
+The server default is used when omitted.
+.TP
+.BR \-P ", " \-\-password\-stdin
+Read the password from the first line of stdin instead of prompting.
+.RE
+.TP
+.B mxctl address delete \fIuser\fB@\fIdomain\fR
+Delete a mailbox and all mail stored in it.
+Asks for confirmation on the terminal; in scripts (no terminal) it refuses to
+run unless
+.B \-\-yes
+is given.
+.SS Forwarders
+.TP
+.B mxctl forward list \fR[\fIends-with\fR]
+List forwarding rules across all domains of the account.
+The optional argument keeps only rules whose source address ends with that
+string.
+.TP
+.B mxctl forward create \fIuser\fB@\fIdomain\fR \fIdest\fB@\fIdomain\fR
+Create a forwarding rule from source to destination.
+The special destinations
+.B :blackhole:
+(silently discard) and
+.B :fail:
+(reject) are accepted in place of a destination address.
+.TP
+.B mxctl forward delete \fIuser\fB@\fIdomain\fR
+Delete the entire rule for the given source address, including all of its
+destinations, after confirmation (or with
+.BR \-\-yes ).
+.SS Catch-all (wildcard) policies
+.TP
+.B mxctl wildcard get \fR[\fIdomain\fR]
+Print the catch-all policy for the domain, or for every domain of the account
+when the domain is omitted.
+The output is in exactly the form
+.B set
+accepts.
+.TP
+.B mxctl wildcard set \fIdomain\fR \fIpolicy\fR
+Set the catch-all policy.
+A policy is one of
+.B fail
+(reject mail to unknown addresses, the server default),
+.B blackhole
+(accept and silently discard it), or an email address (forward it there).
+To clear a catch-all rule, set the policy to
+.BR fail .
+.SH CONFIGURATION
+Credentials are read from
+.B $XDG_CONFIG_HOME/mxctl/config.toml
+(default
+.BR ~/.config/mxctl/config.toml ):
+.PP
+.nf
+server = "eagle.mxlogin.com"   # your mail server
+username = "johndoe"           # your DirectAdmin username
+api_key = "Mx..."              # your API key
+# api_url = "https://api.mxroute.com"   # optional override
+.fi
+.PP
+API keys are created at https://panel.mxroute.com/api-keys.php.
+.SH ENVIRONMENT
+Each config key can be overridden with an environment variable, which also
+allows running without a config file.
+.TP
+.B MXCTL_SERVER
+Overrides
+.BR server .
+.TP
+.B MXCTL_USERNAME
+Overrides
+.BR username .
+.TP
+.B MXCTL_API_KEY
+Overrides
+.BR api_key .
+.TP
+.B MXCTL_API_URL
+Overrides
+.BR api_url .
+.TP
+.B NO_COLOR
+Disables colors when set (with
+.BR \-\-color=auto ).
+.SH OUTPUT
+Successful operations print nothing.
+With
+.BR \-\-verbose ,
+a short note is printed to stderr.
+Listings print one entry per line to stdout and nothing else, sorted
+lexicographically while respecting the domain hierarchy.
+Errors are printed to stderr as "mxctl: error: message".
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Runtime error: API error, invalid response, missing credentials, or a
+declined confirmation.
+.TP
+.B 2
+Usage error: unknown command, bad flag, or malformed argument.
+.SH EXAMPLES
+List all addresses of a domain:
+.PP
+.nf
+mxctl address list example.com
+.fi
+.PP
+Create a mailbox with the password piped in:
+.PP
+.nf
+printf '%s\\n' "$PASSWORD" | mxctl address create box@example.com \-\-password\-stdin
+.fi
+.PP
+Forward one address to another:
+.PP
+.nf
+mxctl forward create sales@example.com team@example.com
+.fi
+.PP
+Forward all unknown addresses of a domain to a single mailbox:
+.PP
+.nf
+mxctl wildcard set example.com all@example.com
+.fi
+.SH FILES
+.TP
+.B ~/.config/mxctl/config.toml
+Default configuration file.
+.SH AUTHOR
+Antonio de Haro (dc138) <antonio@adaro.eu>
+.SH LICENSE
+MIT.
+See the LICENSE file in the source distribution.
