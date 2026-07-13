@@ -58,6 +58,10 @@ mxctl [--color {auto,always,never}] [--plain] [-v] <group> <command> [args]
 
 Every option has a single-letter shorthand: `-c` (`--color`), `-p` (`--plain`), `-v` (`--verbose`), `-V` (`--version`), `-q` (`--quota`), `-l` (`--limit`), `-P` (`--password-stdin`), and `-y` (`--yes`).
 
+Shell completion for bash, zsh, fish, and PowerShell is built in.
+Run `mxctl --install-completion` once to install it for your shell, or print the script with `mxctl --show-completion` to install it manually.
+The Arch package ships completions for bash and zsh, so no extra step is needed there.
+
 ### Addresses (mailboxes)
 
 ```sh
