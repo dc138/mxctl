@@ -14,15 +14,16 @@ import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Annotated, NoReturn, TextIO
+from typing import TYPE_CHECKING, Annotated, NoReturn, TextIO
 
 import typer
 
 from . import __version__
-from .api import ApiError, MxrouteClient
-from .config import ConfigError, load_config
-from .models import CatchAll
 from .sorting import hierarchical_key
+
+if TYPE_CHECKING:
+    from .api import MxrouteClient
+    from .models import CatchAll
 
 RESET = "\x1b[0m"
 RED = "\x1b[31m"
@@ -214,6 +215,11 @@ def read_password(state: State, password_stdin: bool) -> str:
 
 @contextmanager
 def api_client(state: State) -> Iterator[MxrouteClient]:
+    # deferred so that --help, --version, and usage errors never pay for
+    # importing httpx and pydantic (most of the CLI's startup time)
+    from .api import ApiError, MxrouteClient
+    from .config import ConfigError, load_config
+
     try:
         config = load_config()
     except ConfigError as exc:
