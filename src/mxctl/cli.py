@@ -55,7 +55,6 @@ class State:
 
 
 app = typer.Typer(
-    add_completion=False,
     no_args_is_help=True,
     pretty_exceptions_enable=False,
     rich_markup_mode=None,
